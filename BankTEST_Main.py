@@ -53,9 +53,39 @@ def register_user():
     db.close()
 
 
+def second_menu(user_id):
+    while True:
+        try:
+            second_menu_choice = int(input(f'''\nWelcome, User: {user_id} 
+    
+            Please enter the number for what you wish to do: 
+                                
+            1. Transfer Funds
+            2. Add Funds
+            3. Check Balance
+            4. Quit
+                                
+            > '''))
+
+            if second_menu_choice == 1:
+                sender_id = user_id
+                receiver_id = int(input("\nEnter the ID of the account you wish to send to: "))
+                amount = float(input("\nEnter the amount you wish to send: "))
+                transfer(sender_id, receiver_id, amount)
+            elif second_menu_choice == 2:
+                add_funds(user_id)
+            elif second_menu_choice == 3:
+                check_balance(user_id)
+            else:
+                print("\nYou have entered an invalid amount")
+
+        except ValueError as e:
+            print("\nYou have entered an invalid amount", e)
+
 def transfer(sender_id, receiver_id, amount):
+
     try:
-        db = sqlite3.connect('transactions.db')
+        db = sqlite3.connect('basic_bank.db')
         cursor = db.cursor()
 
         cursor.execute('''SELECT balance FROM users WHERE id = ?''', (sender_id,))
@@ -84,7 +114,7 @@ def transfer(sender_id, receiver_id, amount):
 
 def add_funds(user_id):
     try:
-        db = sqlite3.connect('users.db')
+        db = sqlite3.connect('basic_bank.db')
         cursor = db.cursor()
 
         funds_amount = float(input("\nHow much would you like to add to the account? "))
@@ -102,7 +132,7 @@ def add_funds(user_id):
 
 def check_balance(user_id):
     try:
-        db = sqlite3.connect('users.db')
+        db = sqlite3.connect('basic_bank.db')
         cursor = db.cursor()
 
         cursor.execute('''SELECT balance FROM users WHERE id = ?''', (user_id,))
@@ -120,16 +150,18 @@ def check_balance(user_id):
 try:
     initial_menu = int(input('''\nWelcome to the BankTest App!
     
-                                Please enter the number for what you wish to do: 
+    Please enter the number for what you wish to do: 
                                 
-                                1. Login
-                                2. Register
-                                3. Quit
+    1. Login
+    2. Register
+    3. Quit
                                 
-                                > '''))
+    > '''))
 
     if initial_menu == 1:
-        user_login()
+        user_id = user_login()
+        if user_id is not None:
+            second_menu(user_id)
 
     elif initial_menu == 2:
         register_user()
