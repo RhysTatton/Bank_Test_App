@@ -72,44 +72,71 @@ def second_menu(user_id):
                 receiver_id = int(input("\nEnter the ID of the account you wish to send to: "))
                 amount = float(input("\nEnter the amount you wish to send: "))
                 transfer(sender_id, receiver_id, amount)
+
             elif second_menu_choice == 2:
                 add_funds(user_id)
+
             elif second_menu_choice == 3:
                 check_balance(user_id)
+
+            elif second_menu_choice == 4:
+                print("\n You have successfully logged out. Thank you for using our App")
+                break
+
             else:
                 print("\nYou have entered an invalid amount")
 
         except ValueError as e:
             print("\nYou have entered an invalid amount", e)
 
+
 def transfer(sender_id, receiver_id, amount):
-
     try:
-        db = sqlite3.connect('basic_bank.db')
-        cursor = db.cursor()
+        transfer_data = {
+            "Sender-id": sender_id,
+            "receiver_id": receiver_id,
+            "amount": amount
+        }
 
-        cursor.execute('''SELECT balance FROM users WHERE id = ?''', (sender_id,))
-        sender_balance = cursor.fetchone()[0]
+        api_url = 'Place Holder API'
 
-        if sender_balance < amount:
-            db.close()
-            print("You do not have enough in your balance for this transaction")
+        api_response = requests.post(api_url, json=transfer_data)
+
+        if api_response.status_code == 200:
+            print("\nTransfer Successful")
+            try:
+                db = sqlite3.connect('basic_bank.db')
+                cursor = db.cursor()
+
+                cursor.execute('''SELECT balance FROM users WHERE id = ?''', (sender_id,))
+                sender_balance = cursor.fetchone()[0]
+
+                if sender_balance < amount:
+                    db.close()
+                    print("You do not have enough in your balance for this transaction")
+                    return False
+
+                cursor.execute('''UPDATE users SET balance = balance - ? WHERE id = ?''',
+                               (amount, sender_id))
+
+                cursor.execute('''UPDATE users SET balance = balance + ? WHERE id = ?''',
+                               (amount, receiver_id))
+
+                cursor.execute('''INSERT INTO transactions (sender_id, receiver_id, amount) VALUES (?,?,?)''',
+                               (sender_id, receiver_id, amount))
+
+                db.commit()
+                db.close()
+                return True
+            except sqlite3.Error as e:
+                print("\nDatabase error:", str(e))
+            return True
+        else:
+            print("\nTransfer has failed: ", api_response.text)
             return False
-
-        cursor.execute('''UPDATE users SET balance = balance - ? WHERE id = ?''',
-                       (amount, sender_id))
-
-        cursor.execute('''UPDATE users SET balance = balance + ? WHERE id = ?''',
-                       (amount, receiver_id))
-
-        cursor.execute('''INSERT INTO transactions (sender_id, receiver_id, amount) VALUES (?,?,?)''',
-                       (sender_id, receiver_id, amount))
-
-        db.commit()
-        db.close()
-        return True
-    except sqlite3.Error as e:
-        print("\nDatabase error:", str(e))
+    except requests.exceptions.RequestException as e:
+        print("Request error:", str(e))
+        return False
 
 
 def add_funds(user_id):
