@@ -1,5 +1,11 @@
 # Bank_Test_App
 
+**How to run:**
+
+- Make sure you run the BankTEST Database.py first to create the basic_bank database
+- You will need to create 2 users to be able to use the full function of this app
+
+
 Currently a work in progress
 
 This is a basic bank app that uses 2 SQL tables to save users information (username and password) and the tranasaction history 
